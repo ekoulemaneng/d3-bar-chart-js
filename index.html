@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>D3 Bar Chart</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--
+        <link rel="stylesheet" type="text/css" media="screen" href="style.css" />
+    -->
+    <script src='https://d3js.org/d3.v4.min.js'></script>
+    <style>
+    /*---------------------------------------Reset CSS-----------------------------------------*/
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+margin: 0;
+padding: 0;
+border: 0;
+font-size: 100%;
+font: inherit;
+vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+display: block;
+}
+body {
+line-height: 1;
+}
+ol, ul {
+list-style: none;
+}
+blockquote, q {
+quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+content: '';
+content: none;
+}
+table {
+border-collapse: collapse;
+border-spacing: 0;
+}
+/*---------------------------------------------------------------*/
+
+body {
+    background-color: cadetblue;
+}
+
+main {
+    width: 80%;
+    height: 100%;
+    margin: 2.5rem auto auto;
+    background-color: white;
+}
+
+svg {
+    background-color: bisque;
+    display: block;
+    margin: auto;
+}
+
+rect {
+    fill: chocolate;
+}
+
+.bar:hover {
+    fill: skyblue;
+}
+
+#title {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 100;
+    padding-top: .5rem;
+    padding-bottom: .5rem;
+}
+
+#tooltip {
+    position: absolute;
+    background-color: gainsboro;
+    text-align: center;
+    padding: .5rem;
+    border-radius: 4px;
+}
+    </style>
+</head>
+<body>
+    <main>
+        <h1 id="title">United States Gross Domestic Product</h1>
+    </main>
+    <script>
+    const url = 'https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/GDP-data.json';
+let dataset = [];
+const w = 1000;
+const h = 500;
+const padding = 40;
+
+document.addEventListener('DOMContentLoaded', function() {
+    let req = new XMLHttpRequest();
+    req.open('GET', url, true);
+    req.send();
+    req.onload = function() {
+        let json = JSON.parse(req.responseText) ;
+        dataset = json['data'].slice();
+        
+        const svg = d3.select('main').append('svg').attr('width', w).attr('height', h);
+
+        let d = d3.max(dataset, (d) => new Date(d[0]));
+        let m = d.getMonth() + 3;
+        d.setMonth(m);
+
+        const xMin = d3.min(dataset, (d) => new Date(d[0]));
+        const xMax = d;
+        const yMax = d3.max(dataset, (d) => d[1]);
+
+        const xScale = d3.scaleTime()
+        .domain([xMin, xMax])
+        .range([padding, w - padding]);
+
+        const yScale = d3.scaleLinear()
+        .domain([0, yMax])
+        .range([h - padding, padding]);
+
+        const xAxis = d3.axisBottom(xScale);
+        const yAxis = d3.axisLeft(yScale);
+
+        const e = (w - 2 * padding) / (dataset.length + 1) ;
+
+        let tooltip = d3.select('body').append('div').attr('id', 'tooltip').style('visibility', 'hidden').text("Nothing to display");
+
+        svg.append('g').attr('id', 'x-axis').attr('class', 'tick').attr('transform', "translate(0, " + (h - padding) + ")").call(xAxis);
+        svg.append('g').attr('id', 'y-axis').attr('class', 'tick').attr('transform', 'translate(' + padding + ', 0)').call(yAxis);
+
+        svg.selectAll('rect')
+        .data(dataset).enter()
+        .append('rect')
+        .attr('class', 'bar')
+        .attr('data-date', (d) => d[0]).attr('data-gdp', (d) => d[1])
+        .attr('x', (d) => xScale(new Date(d[0]))).attr('y', (d) => yScale(d[1]))
+        .attr('width', e).attr('height', (d) => yScale(0) - yScale(d[1]))
+        .on('mouseover', (d) => {
+            tooltip.attr('data-date', d[0]).style('left', xScale(new Date(d[0])) + 130 + 'px').style('top', yScale(d[1]) + 'px').style('visibility', 'visible').html(d[0] + '<br>' + '$' + d[1] + ' Billions');
+        })
+        .on('mouseout', (d) => tooltip.style('visibility', 'hidden')) ;   
+    };
+});
+    </script>
+    <script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js"> </script>  
+</body>
+</html>
